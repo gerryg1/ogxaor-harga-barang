@@ -28,11 +28,8 @@ export default function HomePage() {
     async function loadPrices() {
       try {
         const prices = await getAllItemPrices();
-        if (prices && prices.length > 0) {
+        if (Array.isArray(prices) && prices.length > 0) {
           setSavedPrices(prices);
-        } else {
-          // If empty, keep default demo data
-          setSavedPrices(defaultSavedPrices);
         }
       } catch (err) {
         console.error('Error loading prices:', err);
@@ -51,7 +48,7 @@ export default function HomePage() {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     const idMatch = String(item.id).includes(q);
-    const nameMatch = item.name.toLowerCase().includes(q);
+    const nameMatch = item.name?.toLowerCase().includes(q);
     const aegisMatch = item.aegisName?.toLowerCase().includes(q);
     const dropMatch = Array.isArray(item.droppedBy) && item.droppedBy.some(d => d.monster?.toLowerCase().includes(q));
     return idMatch || nameMatch || aegisMatch || dropMatch;
@@ -60,13 +57,35 @@ export default function HomePage() {
   // Handle Save Price from Modal
   const handleSavePrice = async (data) => {
     try {
-      const saved = await saveItemPriceToDb(data);
-      // Update state
+      // 1. Optimistic UI update so it appears instantly in the list
+      const cleanNum = Number(data.priceBonus) || 0;
+      const optimisticItem = {
+        itemId: Number(data.itemId),
+        itemName: data.itemName,
+        priceBonus: cleanNum,
+        priceBonusFormatted: cleanNum.toLocaleString('id-ID') + ' Zeny',
+        droppedBy: data.droppedBy,
+        imageUrl: data.imageUrl,
+        iconUrl: data.iconUrl,
+        updatedAt: new Date().toISOString(),
+        note: data.note || ''
+      };
+
       setSavedPrices((prev) => {
         const filtered = prev.filter(x => Number(x.itemId) !== Number(data.itemId));
-        return [saved, ...filtered];
+        return [optimisticItem, ...filtered];
       });
-      showToast(`✓ Harga untuk ${data.itemName} berhasil disimpan!`);
+
+      // 2. Persist via database.js & API route (Network tab will show POST /api/prices 200 OK!)
+      const saved = await saveItemPriceToDb(data);
+      if (saved) {
+        setSavedPrices((prev) => {
+          const filtered = prev.filter(x => Number(x.itemId) !== Number(data.itemId));
+          return [saved, ...filtered];
+        });
+      }
+
+      showToast(`✓ Harga ${data.itemName} (${optimisticItem.priceBonusFormatted}) berhasil disimpan!`);
     } catch (err) {
       console.error('Error saving price:', err);
       showToast(`Terjadi kesalahan saat menyimpan harga.`);
@@ -75,10 +94,11 @@ export default function HomePage() {
 
   // Handle Delete Price
   const handleDeletePrice = async (itemId) => {
-    if (!confirm('Yakin ingin menghapus harga barang ini dari daftar?')) return;
+    if (!confirm(`Yakin ingin menghapus harga barang ID #${itemId} dari daftar?`)) return;
     try {
-      await deleteItemPriceFromDb(itemId);
+      // Optimistic delete
       setSavedPrices((prev) => prev.filter(x => Number(x.itemId) !== Number(itemId)));
+      await deleteItemPriceFromDb(itemId);
       showToast(`Harga barang ID #${itemId} berhasil dihapus.`);
     } catch (err) {
       console.error('Error deleting price:', err);
@@ -157,11 +177,11 @@ export default function HomePage() {
                 Item <strong>"{searchQuery}"</strong> tidak ditemukan.
               </p>
               <p style={{ fontSize: '0.85rem' }}>
-                Coba cari dengan nama item lain seperti <em>Ice Pick</em>, <em>Combat Knife</em>, <em>Valkyrian</em>, atau ID nomornya.
+                Coba cari dengan kata kunci lain seperti <em>Dagger</em>, <em>Sword</em>, <em>Bow</em>, <em>Card</em>, <em>Valkyrian</em>, atau nomor ID.
               </p>
             </div>
           ) : (
-            filteredItems.map((item) => {
+            filteredItems.slice(0, 50).map((item) => {
               const saved = savedPrices.find(p => Number(p.itemId) === Number(item.id));
               return (
                 <RateMyServerItemCard
@@ -172,6 +192,11 @@ export default function HomePage() {
                 />
               );
             })
+          )}
+          {filteredItems.length > 50 && (
+            <div style={{ textAlign: 'center', padding: '16px', color: '#8899a6', fontSize: '0.85rem' }}>
+              Menampilkan 50 dari {filteredItems.length} barang yang cocok. Gunakan kata kunci pencarian yang lebih spesifik.
+            </div>
           )}
         </div>
       )}

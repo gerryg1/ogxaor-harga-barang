@@ -34,8 +34,16 @@ try {
 const COLLECTION_NAME = "item_prices";
 const STORAGE_KEY = "ogxaor_ro_item_prices";
 
+// Helper with timeout to prevent Firestore hanging
+function withTimeout(promise, ms = 1500) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+  ]);
+}
+
 /**
- * Save or update Item Bonus Price (saves to Firebase & syncs to local storage)
+ * Save or update Item Bonus Price (syncs with /api/prices, localStorage, and Firebase)
  * @param {Object} itemData { itemId, itemName, priceBonus, droppedBy, imageUrl, iconUrl, note }
  * @returns {Promise<Object>}
  */
@@ -52,11 +60,30 @@ export async function saveItemPriceToDb(itemData) {
     note: itemData.note || ""
   };
 
-  // 1. Save to LocalStorage / In-memory fallback
+  // 1. Call Next.js API Route (triggers visible action in browser Network tab & saves to file)
+  if (typeof window !== "undefined") {
+    try {
+      const response = await fetch('/api/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        const json = await response.json();
+        if (json.data) {
+          payload.updatedAt = json.data.updatedAt;
+        }
+      }
+    } catch (apiErr) {
+      console.warn("API route save error, continuing with local fallback:", apiErr.message);
+    }
+  }
+
+  // 2. Save to LocalStorage fallback
   if (typeof window !== "undefined") {
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      const filtered = existing.filter(x => x.itemId !== payload.itemId);
+      const filtered = existing.filter(x => Number(x.itemId) !== Number(payload.itemId));
       filtered.unshift(payload);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
     } catch (err) {
@@ -64,13 +91,13 @@ export async function saveItemPriceToDb(itemData) {
     }
   }
 
-  // 2. Save to Firebase Firestore if reachable
+  // 3. Save to Firebase Firestore in background with timeout
   if (db) {
     try {
       const docRef = doc(db, COLLECTION_NAME, String(payload.itemId));
-      await setDoc(docRef, { ...payload, serverTimestamp: serverTimestamp() }, { merge: true });
+      await withTimeout(setDoc(docRef, { ...payload, serverTimestamp: serverTimestamp() }, { merge: true }), 1500);
     } catch (fbErr) {
-      console.warn("Firebase Firestore save skipped/failed (rules or network):", fbErr.message);
+      console.warn("Firebase Firestore async sync skipped/timed out:", fbErr.message);
     }
   }
 
@@ -78,35 +105,53 @@ export async function saveItemPriceToDb(itemData) {
 }
 
 /**
- * Fetch all saved item prices (from Firebase with LocalStorage fallback)
+ * Fetch all saved item prices (from /api/prices, then Firebase, then LocalStorage)
  * @returns {Promise<Array>}
  */
 export async function getAllItemPrices() {
+  // 1. Try Next.js API Route first
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch('/api/prices');
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data));
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Fetch /api/prices error, falling back:", e.message);
+    }
+  }
+
+  // 2. Try LocalStorage
   let localList = [];
   if (typeof window !== "undefined") {
     try {
       localList = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (localList.length > 0) return localList;
     } catch (e) {
       localList = [];
     }
   }
 
+  // 3. Try Firebase Firestore
   if (db) {
     try {
-      const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
+      const querySnapshot = await withTimeout(getDocs(collection(db, COLLECTION_NAME)), 2000);
       const firebaseList = [];
       querySnapshot.forEach((docSnap) => {
         firebaseList.push(docSnap.data());
       });
       if (firebaseList.length > 0) {
-        // Sync back to local storage
         if (typeof window !== "undefined") {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(firebaseList));
         }
         return firebaseList;
       }
     } catch (err) {
-      console.warn("Firebase fetch failed, using local storage:", err.message);
+      console.warn("Firebase fetch skipped/timed out:", err.message);
     }
   }
 
@@ -119,6 +164,17 @@ export async function getAllItemPrices() {
  */
 export async function deleteItemPriceFromDb(itemId) {
   const idNum = Number(itemId);
+
+  // 1. Call API Route
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/prices?itemId=${idNum}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn("API delete error:", err);
+    }
+  }
+
+  // 2. Remove from LocalStorage
   if (typeof window !== "undefined") {
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -129,11 +185,12 @@ export async function deleteItemPriceFromDb(itemId) {
     }
   }
 
+  // 3. Remove from Firebase
   if (db) {
     try {
-      await deleteDoc(doc(db, COLLECTION_NAME, String(idNum)));
+      await withTimeout(deleteDoc(doc(db, COLLECTION_NAME, String(idNum))), 1500);
     } catch (err) {
-      console.warn("Firebase delete failed:", err.message);
+      console.warn("Firebase delete failed/timed out:", err.message);
     }
   }
 
@@ -141,7 +198,7 @@ export async function deleteItemPriceFromDb(itemId) {
 }
 
 /**
- * Export all saved items as JSON string or download as file
+ * Export all saved items as JSON string
  */
 export function exportDatabaseAsJson() {
   if (typeof window !== "undefined") {

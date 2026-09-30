@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave }) {
   const [priceInput, setPriceInput] = useState('');
   const [noteInput, setNoteInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialPrice) {
@@ -27,22 +28,31 @@ export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave
     ? item.droppedBy.map(d => `${d.monster} (${d.rate})`).join(', ')
     : 'None / Special Quest / MVP Box';
 
-  const handleSave = (e) => {
-    e.preventDefault();
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     const cleanNum = Number(String(priceInput).replace(/\D/g, '')) || 0;
-    onSave({
-      itemId: item.id,
-      itemName: item.name,
-      priceBonus: cleanNum,
-      droppedBy: droppedBySummary,
-      imageUrl: collectionImg,
-      iconUrl: iconImg,
-      note: noteInput
-    });
-    onClose();
+
+    try {
+      await onSave({
+        itemId: item.id,
+        itemName: item.name,
+        priceBonus: cleanNum,
+        droppedBy: droppedBySummary,
+        imageUrl: collectionImg,
+        iconUrl: iconImg,
+        note: noteInput
+      });
+      onClose();
+    } catch (err) {
+      console.error('Error in modal onSave:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Format number for display helper
   const numericVal = Number(String(priceInput).replace(/\D/g, '')) || 0;
 
   return (
@@ -55,7 +65,6 @@ export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave
             alt={item.name}
             className="modal-item-img"
             onError={(e) => {
-              // fallback to icon if collection image is missing
               e.currentTarget.src = iconImg;
             }}
           />
@@ -92,6 +101,9 @@ export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave
             placeholder="Masukan Harga Bonus Barang Disini"
             value={priceInput}
             onChange={(e) => setPriceInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave(e);
+            }}
             autoFocus
           />
           {numericVal > 0 && (
@@ -107,13 +119,15 @@ export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave
             type="button" 
             className="modal-btn modal-btn-ok"
             onClick={handleSave}
+            disabled={isSubmitting}
           >
-            OKE
+            {isSubmitting ? 'MENYIMPAN...' : 'OKE'}
           </button>
           <button 
             type="button" 
             className="modal-btn modal-btn-cancel"
             onClick={onClose}
+            disabled={isSubmitting}
           >
             BATAL
           </button>
