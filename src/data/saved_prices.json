@@ -1,13 +1,24 @@
 [
   {
-    "itemId": 1230,
-    "itemName": "Ice Pick [0]",
-    "priceBonus": 15000000,
-    "priceBonusFormatted": "Rp 15.000.000",
-    "droppedBy": "Assassin Cross Eremes (7.5%), Lord of Death (0.05%)",
-    "imageUrl": "https://static.divine-pride.net/images/items/collection/1230.png",
-    "iconUrl": "https://static.divine-pride.net/images/items/item/1230.png",
-    "updatedAt": "2026-09-30T14:31:34.061Z",
-    "note": "Harga Pasaran IDR"
+    "itemId": 4174,
+    "itemName": "Deviling Card",
+    "priceBonus": 4200000,
+    "priceBonusFormatted": "Rp 4.200.000",
+    "droppedBy": "None / Special Quest / MVP Box",
+    "imageUrl": "https://static.divine-pride.net/images/items/collection/4174.png",
+    "iconUrl": "https://static.divine-pride.net/images/items/item/4174.png",
+    "updatedAt": "2026-09-30T14:37:19.142Z",
+    "note": ""
+  },
+  {
+    "itemId": 4303,
+    "itemName": "Giant Whisper Card",
+    "priceBonus": 100000,
+    "priceBonusFormatted": "Rp 100.000",
+    "droppedBy": "Giant Whisper (0.01%)",
+    "imageUrl": "https://static.divine-pride.net/images/items/collection/4303.png",
+    "iconUrl": "https://static.divine-pride.net/images/items/item/4303.png",
+    "updatedAt": "2026-09-30T14:36:09.733Z",
+    "note": ""
   }
 ]

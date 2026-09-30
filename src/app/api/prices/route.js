@@ -2,29 +2,50 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const PRICES_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'saved_prices.json');
+let inMemoryPrices = null;
+
+function getPricesFilePath() {
+  // On Vercel / AWS Lambda, use writable /tmp directory
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const tmpPath = path.join('/tmp', 'saved_prices.json');
+    if (!fs.existsSync(tmpPath)) {
+      try {
+        const defaultData = fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'saved_prices.json'), 'utf-8');
+        fs.writeFileSync(tmpPath, defaultData);
+      } catch (e) {
+        try { fs.writeFileSync(tmpPath, '[]'); } catch (_) {}
+      }
+    }
+    return tmpPath;
+  }
+  return path.join(process.cwd(), 'src', 'data', 'saved_prices.json');
+}
 
 function readPricesFromFile() {
   try {
-    if (!fs.existsSync(PRICES_FILE_PATH)) {
-      fs.writeFileSync(PRICES_FILE_PATH, '[]', 'utf-8');
-      return [];
+    const filePath = getPricesFilePath();
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(data || '[]');
+      inMemoryPrices = parsed;
+      return parsed;
     }
-    const data = fs.readFileSync(PRICES_FILE_PATH, 'utf-8');
-    return JSON.parse(data || '[]');
   } catch (err) {
-    console.error('Error reading saved_prices.json:', err);
-    return [];
+    console.warn('File read warning (fallback to in-memory):', err.message);
   }
+  return inMemoryPrices || [];
 }
 
 function writePricesToFile(prices) {
+  inMemoryPrices = prices;
   try {
-    fs.mkdirSync(path.dirname(PRICES_FILE_PATH), { recursive: true });
-    fs.writeFileSync(PRICES_FILE_PATH, JSON.stringify(prices, null, 2), 'utf-8');
+    const filePath = getPricesFilePath();
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(prices, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.error('Error writing to saved_prices.json:', err);
+    console.warn('File write warning on serverless environment (using in-memory):', err.message);
     return false;
   }
 }
@@ -88,7 +109,7 @@ export async function POST(request) {
 // DELETE /api/prices
 export async function DELETE(request) {
   try {
-    const url = request.nextUrl || new URL(request.url, 'http://localhost:3000');
+    const url = request.nextUrl || new URL(request.url);
     const itemId = url.searchParams.get('itemId');
 
     if (!itemId) {

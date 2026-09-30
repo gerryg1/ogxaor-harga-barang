@@ -3,7 +3,7 @@ import { searchRathenaDb } from '../../../lib/rathenaSearch';
 
 export async function GET(request) {
   try {
-    const url = request.nextUrl || new URL(request.url, 'http://localhost:3000');
+    const url = request.nextUrl || new URL(request.url);
     const query = url.searchParams.get('q') || '';
     const limit = parseInt(url.searchParams.get('limit') || '60', 10);
 
