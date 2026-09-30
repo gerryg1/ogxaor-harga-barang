@@ -7,6 +7,7 @@ import {
   setDoc, 
   getDocs, 
   deleteDoc, 
+  onSnapshot,
   serverTimestamp 
 } from "firebase/firestore";
 
@@ -34,25 +35,57 @@ try {
 const COLLECTION_NAME = "item_prices";
 const STORAGE_KEY = "ogxaor_ro_item_prices";
 
-// Helper with timeout to prevent Firestore hanging
-function withTimeout(promise, ms = 1500) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
-  ]);
+/**
+ * Realtime Live Listener for all connected devices (PC, Laptop, HP / Mobile)
+ * @param {Function} onUpdate Callback when data changes anywhere
+ * @param {Function} onError Callback if Firestore has permission/disabled issue
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribeToItemPrices(onUpdate, onError) {
+  if (!db || typeof window === "undefined") return () => {};
+
+  try {
+    const unsub = onSnapshot(
+      collection(db, COLLECTION_NAME),
+      (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => {
+          list.push(docSnap.data());
+        });
+        // Sort newest first
+        list.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        
+        // Cache to local storage
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        } catch (_) {}
+
+        onUpdate(list);
+      },
+      (err) => {
+        console.warn("Firestore realtime live listener issue:", err.message);
+        if (onError) onError(err);
+      }
+    );
+    return unsub;
+  } catch (err) {
+    console.warn("Could not attach realtime listener:", err);
+    return () => {};
+  }
 }
 
 /**
- * Save or update Item Bonus Price (syncs with /api/prices, localStorage, and Firebase)
+ * Save or update Item Bonus Price (syncs with Firestore, API route, and localStorage)
  * @param {Object} itemData { itemId, itemName, priceBonus, droppedBy, imageUrl, iconUrl, note }
  * @returns {Promise<Object>}
  */
 export async function saveItemPriceToDb(itemData) {
+  const numericPrice = Number(itemData.priceBonus) || 0;
   const payload = {
     itemId: Number(itemData.itemId),
     itemName: itemData.itemName,
-    priceBonus: Number(itemData.priceBonus) || 0,
-    priceBonusFormatted: "Rp " + (Number(itemData.priceBonus) || 0).toLocaleString("id-ID"),
+    priceBonus: numericPrice,
+    priceBonusFormatted: "Rp " + numericPrice.toLocaleString("id-ID"),
     droppedBy: itemData.droppedBy || "Unknown",
     imageUrl: itemData.imageUrl || `https://static.divine-pride.net/images/items/collection/${itemData.itemId}.png`,
     iconUrl: itemData.iconUrl || `https://static.divine-pride.net/images/items/item/${itemData.itemId}.png`,
@@ -60,26 +93,22 @@ export async function saveItemPriceToDb(itemData) {
     note: itemData.note || ""
   };
 
-  // 1. Call Next.js API Route (triggers visible action in browser Network tab & saves to file)
-  if (typeof window !== "undefined") {
+  // 1. Save to Cloud Firestore (Synchronizes across PC, HP, and all devices in real-time)
+  let cloudSaved = false;
+  if (db) {
     try {
-      const response = await fetch('/api/prices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (response.ok) {
-        const json = await response.json();
-        if (json.data) {
-          payload.updatedAt = json.data.updatedAt;
-        }
+      const docRef = doc(db, COLLECTION_NAME, String(payload.itemId));
+      await setDoc(docRef, { ...payload, serverTimestamp: serverTimestamp() }, { merge: true });
+      cloudSaved = true;
+    } catch (fbErr) {
+      console.warn("Firestore cloud save warning:", fbErr.message);
+      if (fbErr.code === 'permission-denied') {
+        console.error("Cloud Firestore API is disabled or database has not been created yet in Firebase Console.");
       }
-    } catch (apiErr) {
-      console.warn("API route save error, continuing with local fallback:", apiErr.message);
     }
   }
 
-  // 2. Save to LocalStorage fallback
+  // 2. LocalStorage save (client fallback)
   if (typeof window !== "undefined") {
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -91,25 +120,46 @@ export async function saveItemPriceToDb(itemData) {
     }
   }
 
-  // 3. Save to Firebase Firestore in background with timeout
-  if (db) {
+  // 3. API route fallback / sync
+  if (typeof window !== "undefined") {
     try {
-      const docRef = doc(db, COLLECTION_NAME, String(payload.itemId));
-      await withTimeout(setDoc(docRef, { ...payload, serverTimestamp: serverTimestamp() }, { merge: true }), 1500);
-    } catch (fbErr) {
-      console.warn("Firebase Firestore async sync skipped/timed out:", fbErr.message);
-    }
+      await fetch('/api/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (_) {}
   }
 
-  return payload;
+  return { ...payload, cloudSaved };
 }
 
 /**
- * Fetch all saved item prices (from /api/prices, then Firebase, then LocalStorage)
+ * Fetch all saved item prices
  * @returns {Promise<Array>}
  */
 export async function getAllItemPrices() {
-  // 1. Try Next.js API Route first
+  // 1. Try Firebase Firestore first for live cloud sync
+  if (db) {
+    try {
+      const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
+      const firebaseList = [];
+      querySnapshot.forEach((docSnap) => {
+        firebaseList.push(docSnap.data());
+      });
+      if (firebaseList.length > 0) {
+        firebaseList.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(firebaseList));
+        }
+        return firebaseList;
+      }
+    } catch (err) {
+      console.warn("Firestore fetch error/disabled:", err.message);
+    }
+  }
+
+  // 2. Try API Route
   if (typeof window !== "undefined") {
     try {
       const res = await fetch('/api/prices');
@@ -120,90 +170,57 @@ export async function getAllItemPrices() {
           return json.data;
         }
       }
-    } catch (e) {
-      console.warn("Fetch /api/prices error, falling back:", e.message);
-    }
+    } catch (_) {}
   }
 
-  // 2. Try LocalStorage
-  let localList = [];
+  // 3. LocalStorage fallback
   if (typeof window !== "undefined") {
     try {
-      localList = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      if (localList.length > 0) return localList;
-    } catch (e) {
-      localList = [];
-    }
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (_) {}
   }
 
-  // 3. Try Firebase Firestore
-  if (db) {
-    try {
-      const querySnapshot = await withTimeout(getDocs(collection(db, COLLECTION_NAME)), 2000);
-      const firebaseList = [];
-      querySnapshot.forEach((docSnap) => {
-        firebaseList.push(docSnap.data());
-      });
-      if (firebaseList.length > 0) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(firebaseList));
-        }
-        return firebaseList;
-      }
-    } catch (err) {
-      console.warn("Firebase fetch skipped/timed out:", err.message);
-    }
-  }
-
-  return localList;
+  return [];
 }
 
 /**
- * Delete Item Price by Item ID
+ * Delete Item Price by Item ID across cloud and local
  * @param {number|string} itemId 
  */
 export async function deleteItemPriceFromDb(itemId) {
   const idNum = Number(itemId);
 
-  // 1. Call API Route
-  if (typeof window !== "undefined") {
+  // 1. Cloud Firestore delete
+  if (db) {
     try {
-      await fetch(`/api/prices?itemId=${idNum}`, { method: 'DELETE' });
+      await deleteDoc(doc(db, COLLECTION_NAME, String(idNum)));
     } catch (err) {
-      console.warn("API delete error:", err);
+      console.warn("Firestore delete warning:", err.message);
     }
   }
 
-  // 2. Remove from LocalStorage
+  // 2. API route delete
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/prices?itemId=${idNum}`, { method: 'DELETE' });
+    } catch (_) {}
+  }
+
+  // 3. LocalStorage delete
   if (typeof window !== "undefined") {
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
       const updated = existing.filter(x => Number(x.itemId) !== idNum);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.warn("LocalStorage delete error:", e);
-    }
-  }
-
-  // 3. Remove from Firebase
-  if (db) {
-    try {
-      await withTimeout(deleteDoc(doc(db, COLLECTION_NAME, String(idNum))), 1500);
-    } catch (err) {
-      console.warn("Firebase delete failed/timed out:", err.message);
-    }
+    } catch (_) {}
   }
 
   return true;
 }
 
-/**
- * Export all saved items as JSON string
- */
 export function exportDatabaseAsJson() {
   if (typeof window !== "undefined") {
-    const list = localStorage.getItem(STORAGE_KEY) || "[]";
-    return list;
+    return localStorage.getItem(STORAGE_KEY) || "[]";
   }
   return "[]";
 }

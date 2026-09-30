@@ -12,7 +12,8 @@ import defaultSavedPrices from '../data/saved_prices.json';
 import { 
   saveItemPriceToDb, 
   getAllItemPrices, 
-  deleteItemPriceFromDb 
+  deleteItemPriceFromDb,
+  subscribeToItemPrices
 } from '../../database';
 
 export default function HomePage() {
@@ -25,10 +26,11 @@ export default function HomePage() {
   const [toastMessage, setToastMessage] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchedTerm, setSearchedTerm] = useState('');
+  const [cloudStatus, setCloudStatus] = useState('checking'); // 'connected' | 'unconfigured' | 'checking'
 
   const debounceTimerRef = useRef(null);
 
-  // Load saved prices on mount
+  // Load saved prices on mount and attach realtime live listener
   useEffect(() => {
     async function loadPrices() {
       try {
@@ -41,6 +43,25 @@ export default function HomePage() {
       }
     }
     loadPrices();
+
+    // Realtime live synchronization across all devices (PC & HP)
+    const unsubscribe = subscribeToItemPrices(
+      (livePrices) => {
+        if (Array.isArray(livePrices)) {
+          setSavedPrices(livePrices);
+          setCloudStatus('connected');
+        }
+      },
+      (err) => {
+        if (err && (err.code === 'permission-denied' || String(err.message).includes('PERMISSION_DENIED'))) {
+          setCloudStatus('unconfigured');
+        }
+      }
+    );
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const showToast = (msg) => {
@@ -82,7 +103,6 @@ export default function HomePage() {
   const handleQueryChange = (text) => {
     setSearchQuery(text);
 
-    // Clear existing timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
@@ -94,7 +114,6 @@ export default function HomePage() {
       return;
     }
 
-    // Set 5-second debounce timer
     debounceTimerRef.current = setTimeout(() => {
       executeSearch(text);
     }, 5000);
@@ -146,11 +165,11 @@ export default function HomePage() {
         return [optimisticItem, ...filtered];
       });
 
-      const saved = await saveItemPriceToDb(data);
-      if (saved) {
+      const result = await saveItemPriceToDb(data);
+      if (result) {
         setSavedPrices((prev) => {
           const filtered = prev.filter(x => Number(x.itemId) !== Number(data.itemId));
-          return [saved, ...filtered];
+          return [result, ...filtered];
         });
       }
 
@@ -209,6 +228,29 @@ export default function HomePage() {
       {/* Main Header */}
       <Header />
 
+      {/* Cloud Sync Status Alert Banner if not enabled yet in Firebase console */}
+      {cloudStatus === 'unconfigured' && (
+        <div style={{
+          background: 'rgba(234, 88, 12, 0.12)',
+          border: '1px solid rgba(234, 88, 12, 0.5)',
+          borderRadius: '8px',
+          padding: '12px 18px',
+          margin: '-10px auto 20px auto',
+          maxWidth: '800px',
+          fontSize: '0.85rem',
+          color: '#fdba74',
+          lineHeight: '1.5',
+          textAlign: 'center'
+        }}>
+          <strong>📡 Sinkronisasi Cloud Antar-Perangkat (PC &amp; HP):</strong>
+          <div style={{ marginTop: '4px' }}>
+            Agar harga yang diinput di PC langsung muncul <strong>LIVE di HP</strong> secara real-time:
+            <br />
+            Silakan buka <a href="https://console.firebase.google.com/project/ragnarok-harga-barang/firestore" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline', fontWeight: 700 }}>Firebase Console Firestore</a> lalu klik <strong>"Create database"</strong> (pilih <em>Start in test mode</em>).
+          </div>
+        </div>
+      )}
+
       {/* Search Input Bar (Matching Screenshot 1) */}
       <SearchBar
         value={searchQuery}
@@ -247,21 +289,21 @@ export default function HomePage() {
           className={`chip-btn ${selectedCategory === 'equip' ? 'active' : ''}`}
           onClick={() => setSelectedCategory('equip')}
         >
-          ⚔️ Senjata & Armor
+          ⚔️ Senjata &amp; Armor
         </button>
         <button
           type="button"
           className={`chip-btn ${selectedCategory === 'consumable' ? 'active' : ''}`}
           onClick={() => setSelectedCategory('consumable')}
         >
-          🧪 Consumable & Herb
+          🧪 Consumable &amp; Herb
         </button>
         <button
           type="button"
           className={`chip-btn ${selectedCategory === 'loot' ? 'active' : ''}`}
           onClick={() => setSelectedCategory('loot')}
         >
-          📦 Sampahan & Loot
+          📦 Sampahan &amp; Loot
         </button>
         <button
           type="button"
@@ -279,7 +321,7 @@ export default function HomePage() {
           className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`}
           onClick={() => setActiveTab('search')}
         >
-          🔍 Cari & Input Harga Item
+          🔍 Cari &amp; Input Harga Item
         </button>
 
         <button
