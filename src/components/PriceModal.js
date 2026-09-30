@@ -108,7 +108,7 @@ export default function PriceModal({ item, initialPrice, isOpen, onClose, onSave
           />
           {numericVal > 0 && (
             <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#fbbf24', marginTop: '6px' }}>
-              Preview: {numericVal.toLocaleString('id-ID')} Zeny
+              Preview: Rp {numericVal.toLocaleString('id-ID')}
             </div>
           )}
         </div>

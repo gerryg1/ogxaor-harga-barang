@@ -52,7 +52,7 @@ export async function saveItemPriceToDb(itemData) {
     itemId: Number(itemData.itemId),
     itemName: itemData.itemName,
     priceBonus: Number(itemData.priceBonus) || 0,
-    priceBonusFormatted: (Number(itemData.priceBonus) || 0).toLocaleString("id-ID") + " Zeny",
+    priceBonusFormatted: "Rp " + (Number(itemData.priceBonus) || 0).toLocaleString("id-ID"),
     droppedBy: itemData.droppedBy || "Unknown",
     imageUrl: itemData.imageUrl || `https://static.divine-pride.net/images/items/collection/${itemData.itemId}.png`,
     iconUrl: itemData.iconUrl || `https://static.divine-pride.net/images/items/item/${itemData.itemId}.png`,

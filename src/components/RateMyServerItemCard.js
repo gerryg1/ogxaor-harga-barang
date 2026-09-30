@@ -130,7 +130,7 @@ export default function RateMyServerItemCard({ item, onOpenPriceModal, savedPric
           {savedPrice ? (
             <div>
               <div style={{ fontSize: '0.85rem', color: '#38bdf8', marginBottom: '4px' }}>
-                ✓ Terdaftar: {savedPrice.priceBonusFormatted || `${savedPrice.priceBonus} Zeny`}
+                ✓ Terdaftar: {savedPrice.priceBonusFormatted || `Rp ${Number(savedPrice.priceBonus).toLocaleString('id-ID')}`}
               </div>
               <div>Edit Harga Bonus</div>
             </div>

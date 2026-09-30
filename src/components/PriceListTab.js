@@ -17,7 +17,7 @@ export default function PriceListTab({ savedPrices, onEditItem, onDeleteItem, on
     );
   });
 
-  const totalZeny = filteredList.reduce((acc, curr) => acc + (Number(curr.priceBonus) || 0), 0);
+  const totalIdr = filteredList.reduce((acc, curr) => acc + (Number(curr.priceBonus) || 0), 0);
 
   const handleCopyJson = () => {
     const jsonStr = JSON.stringify(savedPrices, null, 2);
@@ -46,7 +46,7 @@ export default function PriceListTab({ savedPrices, onEditItem, onDeleteItem, on
             📋 Daftar Harga Barang Terdaftar ({filteredList.length})
           </h2>
           <p style={{ color: '#8899a6', fontSize: '0.85rem', marginTop: '4px' }}>
-            Total Valuasi Bonus: <strong style={{ color: '#fbbf24' }}>{totalZeny.toLocaleString('id-ID')} Zeny</strong>
+            Total Valuasi Bonus: <strong style={{ color: '#fbbf24' }}>Rp {totalIdr.toLocaleString('id-ID')}</strong>
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export default function PriceListTab({ savedPrices, onEditItem, onDeleteItem, on
                 <th style={{ width: '60px' }}>Icon</th>
                 <th>Nama Item</th>
                 <th>Item ID</th>
-                <th>Harga Bonus</th>
+                <th>Harga Bonus (IDR)</th>
                 <th>Dropped By</th>
                 <th>Waktu Diperbarui</th>
                 <th style={{ textAlign: 'center', width: '90px' }}>Aksi</th>
@@ -149,7 +149,7 @@ export default function PriceListTab({ savedPrices, onEditItem, onDeleteItem, on
                   {/* Price */}
                   <td>
                     <span className="badge-price">
-                      {item.priceBonusFormatted || `${Number(item.priceBonus).toLocaleString('id-ID')} Zeny`}
+                      {item.priceBonusFormatted || `Rp ${Number(item.priceBonus).toLocaleString('id-ID')}`}
                     </span>
                   </td>
 

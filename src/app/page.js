@@ -133,7 +133,7 @@ export default function HomePage() {
         itemId: Number(data.itemId),
         itemName: data.itemName,
         priceBonus: cleanNum,
-        priceBonusFormatted: cleanNum.toLocaleString('id-ID') + ' Zeny',
+        priceBonusFormatted: 'Rp ' + cleanNum.toLocaleString('id-ID'),
         droppedBy: data.droppedBy,
         imageUrl: data.imageUrl,
         iconUrl: data.iconUrl,

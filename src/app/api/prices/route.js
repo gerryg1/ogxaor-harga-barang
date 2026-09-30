@@ -50,7 +50,7 @@ export async function POST(request) {
     }
 
     const numericPrice = Number(priceBonus) || 0;
-    const formattedPrice = numericPrice.toLocaleString('id-ID') + ' Zeny';
+    const formattedPrice = 'Rp ' + numericPrice.toLocaleString('id-ID');
 
     const newItem = {
       itemId: Number(itemId),
