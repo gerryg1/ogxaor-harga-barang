@@ -1,7 +1,10 @@
 /**
  * Comprehensive rAthena & Divine-Pride Scraper
- * Pulls monster drop tables from mob_db.yml and equips, cards, and items
- * from item_db_equip.yml, item_db_etc.yml, and item_db_usable.yml.
+ * Pulls:
+ * 1. Monster drop tables from mob_db.yml
+ * 2. Equipment from item_db_equip.yml (Weapons, Armors, Headgears, Accessories)
+ * 3. Consumables & Herbs from item_db_usable.yml (Potions, Herbs, Wings, Buffs, Yggdrasil)
+ * 4. Cards & Etc/Materials/Sampahan from item_db_etc.yml (Jellopy, Oridecon, Elunium, Empty Bottle, etc.)
  */
 
 import fs from 'fs';
@@ -15,7 +18,6 @@ const BASE_URL = 'https://raw.githubusercontent.com/rathena/rathena/master/db/re
 
 function formatMonsterName(name) {
   if (!name) return 'Monster';
-  // Common RO Monster cleanups
   const map = {
     'B_EREMES': 'Assassin Cross Eremes',
     'G_EREMES': 'Assassin Cross Eremes',
@@ -28,7 +30,6 @@ function formatMonsterName(name) {
     'VALKYRIE': 'Valkyrie Randgris'
   };
   if (map[name]) return map[name];
-  // Replace underscores and format Title Case
   return name.replace(/_/g, ' ')
     .toLowerCase()
     .replace(/\b\w/g, l => l.toUpperCase());
@@ -87,7 +88,7 @@ async function buildDropMap() {
   return dropMap;
 }
 
-function parseItemsFromText(text, dropMap, defaultType = 'Equipment') {
+function parseItemsFromText(text, dropMap, defaultType = 'Etc') {
   const items = [];
   const rawBlocks = text.split(/\n  - Id:\s+/);
 
@@ -149,6 +150,19 @@ function parseItemsFromText(text, dropMap, defaultType = 'Equipment') {
       rmsIcon: `https://ratemyserver.net/item_gfx/${id}.gif`
     };
 
+    let desc = '';
+    if (script) {
+      desc = `Efek: ${script.slice(0, 180)}...`;
+    } else if (type === 'Healing' || type === 'Usable') {
+      desc = `Item konsumsi / pemulihan HP & SP (${name}).`;
+    } else if (type === 'Card') {
+      desc = `Kartu monster Ragnarok Online (${name}).`;
+    } else if (type === 'Etc') {
+      desc = `Bahan material / barang jarahan monster (Loot: ${name}).`;
+    } else {
+      desc = `Item perlengkapan resmi dari rAthena database.`;
+    }
+
     items.push({
       id,
       name,
@@ -166,10 +180,10 @@ function parseItemsFromText(text, dropMap, defaultType = 'Equipment') {
       weaponLvl: wlvMatch ? parseInt(wlvMatch[1], 10) : 0,
       slot: slots,
       applicableJobs: jobs,
-      description: script ? `Efek script rAthena: ${script.slice(0, 200)}...` : `Item ${type} resmi dari database rAthena.`,
-      itemScript: script ? `{ ${script.slice(0, 160)} }` : '{}',
+      description: desc,
+      itemScript: script ? `{ ${script.slice(0, 150)} }` : '{}',
       droppedBy: drops,
-      enchantment: slots > 0 ? 'Socket Enchantable' : 'Standard',
+      enchantment: slots > 0 ? 'Socket Enchantable' : (type === 'Card' ? 'Card Compound' : 'None'),
       images
     });
   }
@@ -178,86 +192,80 @@ function parseItemsFromText(text, dropMap, defaultType = 'Equipment') {
 }
 
 export async function runFullScraper() {
-  console.log('=== STARTING FULL RATHENA SCRAPER ===');
+  console.log('=== STARTING COMPREHENSIVE RATHENA SCRAPER ===');
   const dropMap = await buildDropMap();
 
+  // 1. Equipment (Weapons, Armors, Shields, Headgears, Accessories)
   console.log('Downloading item_db_equip.yml...');
   const equipText = await fetchText(`${BASE_URL}/item_db_equip.yml`);
-  console.log('Parsing equipment items...');
   const equipItems = parseItemsFromText(equipText, dropMap, 'Equipment');
   console.log(`Parsed ${equipItems.length} equipment items.`);
 
-  console.log('Downloading item_db_etc.yml (Cards & Quest)...');
+  // 2. Consumables & Herbs (Potions, Herbs, Wings, Yggdrasil, Buffs)
+  console.log('Downloading item_db_usable.yml (Consumables & Herbs)...');
+  const usableText = await fetchText(`${BASE_URL}/item_db_usable.yml`);
+  const usableItems = parseItemsFromText(usableText, dropMap, 'Usable');
+  console.log(`Parsed ${usableItems.length} usable & herb items.`);
+
+  // 3. Cards & Etc/Materials/Loot/Sampahan
+  console.log('Downloading item_db_etc.yml (Cards & Monster Loot/Sampahan)...');
   const etcText = await fetchText(`${BASE_URL}/item_db_etc.yml`);
-  console.log('Parsing cards & etc items...');
   const etcItems = parseItemsFromText(etcText, dropMap, 'Etc');
   const cardItems = etcItems.filter(it => it.type === 'Card' || it.aegisName.includes('Card') || (it.id >= 4001 && it.id <= 4700));
-  console.log(`Parsed ${cardItems.length} card items.`);
+  const lootItems = etcItems.filter(it => it.type !== 'Card' && !it.aegisName.includes('Card'));
+  console.log(`Parsed ${cardItems.length} cards and ${lootItems.length} monster loot/material items.`);
 
-  // Curate rich dataset (Iconic items + popular weapons, armors, accessories, cards)
   const combined = [];
-  const priorityIds = [
-    1230, // Ice Pick
-    1228, // Combat Knife
-    1227, // Assassin Dagger
-    1261, // Infiltrator
-    1126, // Muramasa
-    1127, // Excalibur
-    1263, // Grimtooth
-    2357, // Valkyrian Armor
-    2353, // Diabolus Robe
-    2421, // Valkyrian Shoes
-    2524, // Valkyrian Manteau
-    2114, // Valkyrie Shield
-    2629, // Megingjard
-    2630, // Brisingamen
-    1530, // Mjolnir
-    4047, // Ghostring Card
-    4054, // Angeling Card
-    4143, // Golden Thief Bug Card
-    4128, // Raydric Card
-    4005, // Marc Card
-    4008, // Thara Frog Card
-    4131, // Abysmal Knight Card
-    4025, // Hydra Card
-    4147, // Berzebub Card
-    4148  // Kiel D-01 Card
-  ];
-
   const seenIds = new Set();
 
-  // 1. Priority items
+  function addItem(it) {
+    if (!it || seenIds.has(it.id)) return;
+    seenIds.add(it.id);
+    combined.push(it);
+  }
+
+  // A. Priority Items (Weapons, Armor, Cards)
+  const priorityIds = [
+    1230, 1228, 1227, 1261, 1126, 1127, 1263, 2357, 2353, 2421, 2524, 2114, 2629, 2630, 1530,
+    4047, 4054, 4143, 4128, 4005, 4008, 4131, 4025, 4147, 4148
+  ];
   for (const id of priorityIds) {
     const found = equipItems.find(x => x.id === id) || cardItems.find(x => x.id === id);
-    if (found) {
-      seenIds.add(found.id);
-      combined.push(found);
-    }
+    if (found) addItem(found);
   }
 
-  // 2. Add equipment items (weapons, armors, accessories, headgears)
+  // B. Add ALL Usable Items & Herbs (Potions, Herbs 507-511, Wings 601-602, Yggdrasil 607-608, Panacea, Awakening, etc.)
+  for (const it of usableItems) {
+    addItem(it);
+  }
+
+  // C. Add Monster Loot / Sampahan / Materials / Ore (Jellopy 909, Garlet, Scell, Zargon, Fluff, Empty Bottle 713, Oridecon 984, Elunium 985, Steel 999, Coal, Fabric, etc.)
+  // Pick all classic and widely traded loot items
+  for (const it of lootItems) {
+    // Include all items that drop from monsters or are under ID 2000 or have drop records
+    if (it.id < 2000 || it.id < 7500 || it.droppedBy.length > 0) {
+      addItem(it);
+    }
+    if (combined.length >= 2500) break;
+  }
+
+  // D. Add Weapons & Equipments
   for (const it of equipItems) {
-    if (!seenIds.has(it.id)) {
-      seenIds.add(it.id);
-      combined.push(it);
-    }
-    if (combined.length >= 1000) break;
+    addItem(it);
+    if (combined.length >= 3500) break;
   }
 
-  // 3. Add all cards
+  // E. Add All Cards
   for (const it of cardItems) {
-    if (!seenIds.has(it.id)) {
-      seenIds.add(it.id);
-      combined.push(it);
-    }
-    if (combined.length >= 1600) break;
+    addItem(it);
+    if (combined.length >= 4200) break;
   }
 
-  console.log(`Total curated items: ${combined.length}`);
+  console.log(`=== TOTAL COMPILED ITEMS: ${combined.length} ===`);
 
   const outputPath = path.join(__dirname, '..', 'src', 'data', 'items.json');
   fs.writeFileSync(outputPath, JSON.stringify(combined, null, 2), 'utf-8');
-  console.log(`Successfully written items database to: ${outputPath}`);
+  console.log(`Successfully written database with Consumables, Herbs, Loot & Equips to: ${outputPath}`);
 }
 
 runFullScraper().catch(console.error);

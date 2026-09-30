@@ -17,6 +17,7 @@ import {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('search'); // 'search' | 'list'
+  const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' | 'consumable' | 'loot' | 'equip' | 'card'
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState(itemsDatabase);
   const [savedPrices, setSavedPrices] = useState(defaultSavedPrices);
@@ -45,6 +46,21 @@ export default function HomePage() {
 
   // Filter items for Tab 1
   const filteredItems = items.filter((item) => {
+    // 1. Category check
+    if (selectedCategory === 'consumable') {
+      const isConsumable = item.type === 'Healing' || item.type === 'Usable' || item.type === 'DelayConsume' || item.type === 'Cash' || item.name.toLowerCase().includes('herb') || item.name.toLowerCase().includes('potion');
+      if (!isConsumable) return false;
+    } else if (selectedCategory === 'loot') {
+      const isLoot = item.type === 'Etc' || item.type === 'Ammo' || item.class === 'Material';
+      if (!isLoot) return false;
+    } else if (selectedCategory === 'card') {
+      if (item.type !== 'Card' && !item.name.toLowerCase().includes('card')) return false;
+    } else if (selectedCategory === 'equip') {
+      const isEquip = item.type === 'Weapon' || item.type === 'Armor' || item.type === 'Equipment' || item.type === 'Headgear' || item.type === 'Shadow';
+      if (!isEquip) return false;
+    }
+
+    // 2. Search query check
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     const idMatch = String(item.id).includes(q);
@@ -57,7 +73,6 @@ export default function HomePage() {
   // Handle Save Price from Modal
   const handleSavePrice = async (data) => {
     try {
-      // 1. Optimistic UI update so it appears instantly in the list
       const cleanNum = Number(data.priceBonus) || 0;
       const optimisticItem = {
         itemId: Number(data.itemId),
@@ -76,7 +91,6 @@ export default function HomePage() {
         return [optimisticItem, ...filtered];
       });
 
-      // 2. Persist via database.js & API route (Network tab will show POST /api/prices 200 OK!)
       const saved = await saveItemPriceToDb(data);
       if (saved) {
         setSavedPrices((prev) => {
@@ -96,7 +110,6 @@ export default function HomePage() {
   const handleDeletePrice = async (itemId) => {
     if (!confirm(`Yakin ingin menghapus harga barang ID #${itemId} dari daftar?`)) return;
     try {
-      // Optimistic delete
       setSavedPrices((prev) => prev.filter(x => Number(x.itemId) !== Number(itemId)));
       await deleteItemPriceFromDb(itemId);
       showToast(`Harga barang ID #${itemId} berhasil dihapus.`);
@@ -148,6 +161,45 @@ export default function HomePage() {
         onSearch={() => {}}
       />
 
+      {/* Category Filter Chips */}
+      <div className="category-filters">
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('all')}
+        >
+          Semua Item ({items.length.toLocaleString('id-ID')})
+        </button>
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'consumable' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('consumable')}
+        >
+          🧪 Consumable & Herb
+        </button>
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'loot' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('loot')}
+        >
+          📦 Sampahan & Loot
+        </button>
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'equip' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('equip')}
+        >
+          ⚔️ Senjata & Armor
+        </button>
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'card' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('card')}
+        >
+          🃏 Kartu / Card
+        </button>
+      </div>
+
       {/* Navigation Tabs */}
       <div className="tabs-nav">
         <button
@@ -177,11 +229,11 @@ export default function HomePage() {
                 Item <strong>"{searchQuery}"</strong> tidak ditemukan.
               </p>
               <p style={{ fontSize: '0.85rem' }}>
-                Coba cari dengan kata kunci lain seperti <em>Dagger</em>, <em>Sword</em>, <em>Bow</em>, <em>Card</em>, <em>Valkyrian</em>, atau nomor ID.
+                Coba cari dengan kata kunci lain seperti <em>Red Herb</em>, <em>White Potion</em>, <em>Jellopy</em>, <em>Elunium</em>, <em>Ice Pick</em>, atau nomor ID.
               </p>
             </div>
           ) : (
-            filteredItems.slice(0, 50).map((item) => {
+            filteredItems.slice(0, 60).map((item) => {
               const saved = savedPrices.find(p => Number(p.itemId) === Number(item.id));
               return (
                 <RateMyServerItemCard
@@ -193,9 +245,9 @@ export default function HomePage() {
               );
             })
           )}
-          {filteredItems.length > 50 && (
+          {filteredItems.length > 60 && (
             <div style={{ textAlign: 'center', padding: '16px', color: '#8899a6', fontSize: '0.85rem' }}>
-              Menampilkan 50 dari {filteredItems.length} barang yang cocok. Gunakan kata kunci pencarian yang lebih spesifik.
+              Menampilkan 60 dari {filteredItems.length.toLocaleString('id-ID')} barang yang cocok. Gunakan kata kunci pencarian yang lebih spesifik jika mencari item tertentu.
             </div>
           )}
         </div>
