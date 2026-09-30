@@ -11,6 +11,8 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="https://static.divine-pride.net/images/items/item/1230.png" />
+        {/* Direct static stylesheet guarantee */}
+        <link rel="stylesheet" href="/globals.css" />
       </head>
       <body>
         {children}
