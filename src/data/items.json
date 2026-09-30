@@ -1,0 +1,367 @@
+[
+  {
+    "id": 1230,
+    "name": "Ice Pick [0]",
+    "subtype": "[One Hand]",
+    "aegisName": "House_Auger",
+    "type": "Weapon",
+    "class": "Dagger",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 60,
+    "attack": 80,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 36,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": [
+      "Swordman", "Mage", "Archer", "Merchant", "Thief", "Knight",
+      "Wizard", "Blacksmith", "Hunter", "Assassin", "Crusader", "Sage",
+      "Rogue", "Alchemist", "Bard / Dancer", "Soul Linker", "Ninja"
+    ],
+    "description": "An ice pick that's usually used for piercing solid ice or wood. Deals more damage depending on the target's Defense.",
+    "itemScript": "{ bonus bDefRatioAtkClass, Class_All; },{},{}",
+    "droppedBy": [
+      { "monster": "Assassin Cross Eremes", "rate": "45%" },
+      { "monster": "RSX 0806 / RSX-0806", "rate": "0.3%" },
+      { "monster": "Lord of Death / Lord of the Dead", "rate": "0.3%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1230.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1230.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1230.gif"
+    }
+  },
+  {
+    "id": 1228,
+    "name": "Combat Knife [0]",
+    "subtype": "[One Hand]",
+    "aegisName": "Combat_Knife",
+    "type": "Weapon",
+    "class": "Dagger",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 40,
+    "attack": 80,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 36,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": [
+      "Swordman", "Mage", "Archer", "Merchant", "Thief", "Knight",
+      "Wizard", "Blacksmith", "Hunter", "Assassin", "Crusader", "Sage",
+      "Rogue", "Alchemist", "Soul Linker", "Ninja"
+    ],
+    "description": "A combat knife designed for close-quarters fighting. Pierces Demi-Human defense and increases physical damage on Demi-Human monsters by 10%. Increases damage received from Demon monsters by 10%.",
+    "itemScript": "{ bonus2 bAddEff,Eff_Blind,1000; bonus2 bSubRace,RC_DemiHuman,10; bonus2 bAddRace,RC_DemiHuman,10; bonus bIgnoreDefRace,RC_DemiHuman; bonus2 bSubRace,RC_Demon,-10; },{},{}",
+    "droppedBy": [
+      { "monster": "Sniper Cecil", "rate": "0.5%" },
+      { "monster": "High Priest Margaretha", "rate": "0.3%" },
+      { "monster": "Old Blue Box", "rate": "0.01%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1228.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1228.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1228.gif"
+    }
+  },
+  {
+    "id": 1261,
+    "name": "Infiltrator [0]",
+    "subtype": "[Two Hand]",
+    "aegisName": "Infiltrator",
+    "type": "Weapon",
+    "class": "Katar",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 140,
+    "attack": 140,
+    "magicAttack": 0,
+    "defense": 3,
+    "requiredLvl": 75,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": ["Assassin", "Assassin Cross", "Guillotine Cross"],
+    "description": "A special katar designed to inflict mortal wounds on human targets. Increases damage on Demi-Human race by 50%. DEF + 3, Perfect Dodge + 2, FLEE + 5.",
+    "itemScript": "{ bonus2 bAddRace,RC_DemiHuman,50; bonus bDef,3; bonus bFlee2,2; bonus bFlee,5; },{},{}",
+    "droppedBy": [
+      { "monster": "Nightmare Terror", "rate": "0.05%" },
+      { "monster": "Bloody Murderer", "rate": "0.03%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1261.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1261.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1261.gif"
+    }
+  },
+  {
+    "id": 2357,
+    "name": "Valkyrian Armor [1]",
+    "subtype": "[Armor]",
+    "aegisName": "Valkyrie_Armor",
+    "type": "Armor",
+    "class": "Armor",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 280,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 55,
+    "requiredLvl": 65,
+    "weaponLvl": 0,
+    "slot": 1,
+    "applicableJobs": [
+      "Swordman Class", "Merchant Class", "Thief Class"
+    ],
+    "description": "A battle armor worn by the Valkyries. All Stats + 1. Indestructible in battle. [Mage, Archer, Acolyte Class] Silence resistance + 50%. [Swordman, Merchant, Thief Class] Stun resistance + 50%.",
+    "itemScript": "{ bonus bAllStats,1; bonus bUnbreakableArmor,0; bonus2 bResEff,Eff_Stun,5000; },{},{}",
+    "droppedBy": [
+      { "monster": "Valkyrie Randgris", "rate": "15%" },
+      { "monster": "Beelzebub", "rate": "5%" }
+    ],
+    "enchantment": "Hidden Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/2357.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/2357.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/2357.gif"
+    }
+  },
+  {
+    "id": 4047,
+    "name": "Ghostring Card",
+    "subtype": "[Card]",
+    "aegisName": "Ghostring_Card",
+    "type": "Card",
+    "class": "Armor Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Enchant an Armor with the Ghost Property. HP Recovery - 25%. Prefix: Ghost.",
+    "itemScript": "{ bonus bDefEle,Ele_Ghost; bonus bHPrecovRate,-25; },{},{}",
+    "droppedBy": [
+      { "monster": "Ghostring", "rate": "0.01%" }
+    ],
+    "enchantment": "Armor Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4047.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4047.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4047.gif"
+    }
+  },
+  {
+    "id": 4054,
+    "name": "Angeling Card",
+    "subtype": "[Card]",
+    "aegisName": "Angeling_Card",
+    "type": "Card",
+    "class": "Armor Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Enchant an Armor with the Holy Property. Prefix: Holy.",
+    "itemScript": "{ bonus bDefEle,Ele_Holy; },{},{}",
+    "droppedBy": [
+      { "monster": "Angeling", "rate": "0.01%" }
+    ],
+    "enchantment": "Armor Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4054.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4054.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4054.gif"
+    }
+  },
+  {
+    "id": 4143,
+    "name": "Golden Thief Bug Card",
+    "subtype": "[Card]",
+    "aegisName": "Thief_Bug_Boss_Card",
+    "type": "Card",
+    "class": "Shield Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Immunity to all magical attacks, including supportive skills. Increases SP consumption of all skills by 100%. Prefix: Deaf.",
+    "itemScript": "{ bonus bNoMagicDamage,100; bonus bUseSPrate,100; },{},{}",
+    "droppedBy": [
+      { "monster": "Golden Thief Bug", "rate": "0.01%" }
+    ],
+    "enchantment": "Shield Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4143.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4143.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4143.gif"
+    }
+  },
+  {
+    "id": 4128,
+    "name": "Raydric Card",
+    "subtype": "[Card]",
+    "aegisName": "Raydric_Card",
+    "type": "Card",
+    "class": "Garment Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Increase resistance to Neutral Property attacks by 20%. Prefix: Immune.",
+    "itemScript": "{ bonus2 bSubEle,Ele_Neutral,20; },{},{}",
+    "droppedBy": [
+      { "monster": "Raydric", "rate": "0.01%" }
+    ],
+    "enchantment": "Garment Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4128.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4128.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4128.gif"
+    }
+  },
+  {
+    "id": 4005,
+    "name": "Marc Card",
+    "subtype": "[Card]",
+    "aegisName": "Marc_Card",
+    "type": "Card",
+    "class": "Armor Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Gain 100% resistance against the Freeze status. Increases resistance to Water Property attacks by 5%. Prefix: Unfrozen.",
+    "itemScript": "{ bonus2 bResEff,Eff_Freeze,10000; bonus2 bSubEle,Ele_Water,5; },{},{}",
+    "droppedBy": [
+      { "monster": "Marc", "rate": "0.01%" },
+      { "monster": "Undersea Tunnel Mob", "rate": "0.01%" }
+    ],
+    "enchantment": "Armor Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4005.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4005.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4005.gif"
+    }
+  },
+  {
+    "id": 4008,
+    "name": "Thara Frog Card",
+    "subtype": "[Card]",
+    "aegisName": "Thara_Frog_Card",
+    "type": "Card",
+    "class": "Shield Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Reduce damage received from Demi-Human monster by 30%. Prefix: From Hell.",
+    "itemScript": "{ bonus2 bSubRace,RC_DemiHuman,30; },{},{}",
+    "droppedBy": [
+      { "monster": "Thara Frog", "rate": "0.01%" }
+    ],
+    "enchantment": "Shield Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4008.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4008.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4008.gif"
+    }
+  },
+  {
+    "id": 1126,
+    "name": "Muramasa [0]",
+    "subtype": "[Two Hand]",
+    "aegisName": "Muramasa",
+    "type": "Weapon",
+    "class": "Two-Handed Sword",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 100,
+    "attack": 155,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 48,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": ["Knight", "Lord Knight", "Rune Knight"],
+    "description": "A cursed two-handed sword with a razor-sharp edge. Critical + 30%, ASPD + 8%. High chance to inflict Curse on both the wielder and enemy.",
+    "itemScript": "{ bonus bCritical,30; bonus bAspdRate,8; bonus2 bAddEff,Eff_Curse,500; bonus2 bAutoSpell,Eff_Curse,1; },{},{}",
+    "droppedBy": [
+      { "monster": "Wanderer", "rate": "0.02%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1126.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1126.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1126.gif"
+    }
+  },
+  {
+    "id": 2629,
+    "name": "Megingjard [0]",
+    "subtype": "[Accessory]",
+    "aegisName": "Megingjard",
+    "type": "Armor",
+    "class": "Accessory",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 800,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 2,
+    "requiredLvl": 94,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Godly Item. STR + 40, MDEF + 7. If the user's Base STR is 120 or higher, adds additional ATK based on STR.",
+    "itemScript": "{ bonus bStr,40; bonus bMdef,7; },{},{}",
+    "droppedBy": [
+      { "monster": "Godly Item Quest / Guild Treasure", "rate": "Exclusive" }
+    ],
+    "enchantment": "None",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/2629.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/2629.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/2629.gif"
+    }
+  }
+]
