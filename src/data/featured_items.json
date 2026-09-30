@@ -1,0 +1,209 @@
+[
+  {
+    "id": 1230,
+    "name": "Ice Pick [0]",
+    "subtype": "[Dagger]",
+    "aegisName": "House_Auger",
+    "type": "Weapon",
+    "class": "Dagger",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 60,
+    "attack": 80,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 36,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": ["Swordman", "Mage", "Archer", "Merchant", "Thief", "Knight", "Wizard", "Blacksmith", "Hunter", "Assassin", "Crusader", "Sage", "Rogue", "Alchemist", "Soul Linker", "Ninja"],
+    "description": "An ice pick that's usually used for piercing solid ice or wood. Deals more damage depending on the target's Defense.",
+    "itemScript": "{ bonus bDefRatioAtkClass, Class_All; },{},{}",
+    "droppedBy": [
+      { "monster": "Assassin Cross Eremes", "rate": "7.5%" },
+      { "monster": "RSX 0806 / RSX-0806", "rate": "0.03%" },
+      { "monster": "Lord of Death / Lord of the Dead", "rate": "0.05%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1230.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1230.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1230.gif"
+    }
+  },
+  {
+    "id": 6635,
+    "name": "Blacksmith Blessing",
+    "subtype": "[Etc]",
+    "aegisName": "Blacksmith_Blessing",
+    "type": "Etc",
+    "class": "Etc",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 0,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Item top-up tempa legendaris. Melindungi peralatan dari kehancuran atau penurunan level tempa saat gagal ditempa.",
+    "itemScript": "{}",
+    "droppedBy": [],
+    "enchantment": "Refine Protection",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/6635.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/6635.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/6635.gif"
+    }
+  },
+  {
+    "id": 1228,
+    "name": "Combat Knife [0]",
+    "subtype": "[Dagger]",
+    "aegisName": "Combat_Knife",
+    "type": "Weapon",
+    "class": "Dagger",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 40,
+    "attack": 80,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 36,
+    "weaponLvl": 4,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "A combat knife designed for close-quarters fighting. Pierces Demi-Human defense and increases physical damage on Demi-Human by 10%.",
+    "itemScript": "{ bonus2 bSubRace,RC_DemiHuman,10; bonus bIgnoreDefRace,RC_DemiHuman; },{},{}",
+    "droppedBy": [
+      { "monster": "Sniper Cecil", "rate": "0.5%" },
+      { "monster": "High Priest Margaretha", "rate": "0.3%" }
+    ],
+    "enchantment": "Socket Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/1228.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/1228.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/1228.gif"
+    }
+  },
+  {
+    "id": 507,
+    "name": "Red Herb",
+    "subtype": "[Healing]",
+    "aegisName": "Red_Herb",
+    "type": "Healing",
+    "class": "Herb",
+    "buy": "18z",
+    "sell": "9z",
+    "weight": 3,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Daun herbal merah obat pemulih HP. Bahan baku pembuatan Red Potion.",
+    "itemScript": "{ itemheal rand(18,28),0; }",
+    "droppedBy": [
+      { "monster": "Poring", "rate": "7.0%" },
+      { "monster": "Fabre", "rate": "7.0%" },
+      { "monster": "Red Plant", "rate": "55.0%" }
+    ],
+    "enchantment": "None",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/507.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/507.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/507.gif"
+    }
+  },
+  {
+    "id": 909,
+    "name": "Jellopy",
+    "subtype": "[Etc]",
+    "aegisName": "Jellopy",
+    "type": "Etc",
+    "class": "Material",
+    "buy": "6z",
+    "sell": "3z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Sepotong kristal agar-agar kecil yang dijatuhkan oleh monster pemula.",
+    "itemScript": "{}",
+    "droppedBy": [
+      { "monster": "Poring", "rate": "70.0%" },
+      { "monster": "Drop", "rate": "70.0%" }
+    ],
+    "enchantment": "None",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/909.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/909.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/909.gif"
+    }
+  },
+  {
+    "id": 2357,
+    "name": "Valkyrian Armor [1]",
+    "subtype": "[Armor]",
+    "aegisName": "Valkyrie_Armor",
+    "type": "Armor",
+    "class": "Armor",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 280,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 55,
+    "requiredLvl": 65,
+    "weaponLvl": 0,
+    "slot": 1,
+    "applicableJobs": ["Swordman Class", "Merchant Class", "Thief Class"],
+    "description": "A battle armor worn by the Valkyries. All Stats + 1. Indestructible in battle.",
+    "itemScript": "{ bonus bAllStats,1; bonus bUnbreakableArmor,0; },{},{}",
+    "droppedBy": [
+      { "monster": "Valkyrie Randgris", "rate": "3.0%" }
+    ],
+    "enchantment": "Hidden Enchantable",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/2357.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/2357.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/2357.gif"
+    }
+  },
+  {
+    "id": 4047,
+    "name": "Ghostring Card",
+    "subtype": "[Card]",
+    "aegisName": "Ghostring_Card",
+    "type": "Card",
+    "class": "Armor Card",
+    "buy": "20z",
+    "sell": "10z",
+    "weight": 1,
+    "attack": 0,
+    "magicAttack": 0,
+    "defense": 0,
+    "requiredLvl": 0,
+    "weaponLvl": 0,
+    "slot": 0,
+    "applicableJobs": ["All Jobs"],
+    "description": "Enchant an Armor with the Ghost Property. HP Recovery - 25%. Prefix: Ghost.",
+    "itemScript": "{ bonus bDefEle,Ele_Ghost; bonus bHPrecovRate,-25; },{},{}",
+    "droppedBy": [
+      { "monster": "Ghostring", "rate": "0.01%" }
+    ],
+    "enchantment": "Armor Compound",
+    "images": {
+      "icon": "https://static.divine-pride.net/images/items/item/4047.png",
+      "collection": "https://static.divine-pride.net/images/items/collection/4047.png",
+      "rmsIcon": "https://ratemyserver.net/item_gfx/4047.gif"
+    }
+  }
+]

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import RateMyServerItemCard from '../components/RateMyServerItemCard';
 import PriceModal from '../components/PriceModal';
 import PriceListTab from '../components/PriceListTab';
 
-import itemsDatabase from '../data/items.json';
+import initialFeaturedItems from '../data/featured_items.json';
 import defaultSavedPrices from '../data/saved_prices.json';
 import { 
   saveItemPriceToDb, 
@@ -17,14 +17,18 @@ import {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('search'); // 'search' | 'list'
-  const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' | 'consumable' | 'loot' | 'equip' | 'card'
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [items, setItems] = useState(itemsDatabase);
+  const [items, setItems] = useState(initialFeaturedItems);
   const [savedPrices, setSavedPrices] = useState(defaultSavedPrices);
   const [modalItem, setModalItem] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchedTerm, setSearchedTerm] = useState('');
 
-  // Load saved prices on client mount
+  const debounceTimerRef = useRef(null);
+
+  // Load saved prices on mount
   useEffect(() => {
     async function loadPrices() {
       try {
@@ -44,9 +48,68 @@ export default function HomePage() {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // Filter items for Tab 1
+  // Perform on-demand search to /api/search
+  const executeSearch = useCallback(async (queryText) => {
+    const q = (queryText !== undefined ? queryText : searchQuery).trim();
+
+    if (!q) {
+      setItems(initialFeaturedItems);
+      setSearchedTerm('');
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchedTerm(q);
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=60`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.items)) {
+          setItems(json.items);
+        }
+      }
+    } catch (err) {
+      console.error('Search request error:', err);
+      showToast('Gagal mencari item. Pastikan server aktif.');
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
+
+  // Handle typing with 5-second debounce (as requested by user)
+  const handleQueryChange = (text) => {
+    setSearchQuery(text);
+
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (!text.trim()) {
+      setItems(initialFeaturedItems);
+      setSearchedTerm('');
+      setIsSearching(false);
+      return;
+    }
+
+    // Set 5-second debounce timer
+    debounceTimerRef.current = setTimeout(() => {
+      executeSearch(text);
+    }, 5000);
+  };
+
+  // Immediate search on Enter or Search Button
+  const handleImmediateSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    executeSearch();
+  };
+
+  // Filter items by category tab
   const filteredItems = items.filter((item) => {
-    // 1. Category check
     if (selectedCategory === 'consumable') {
       const isConsumable = item.type === 'Healing' || item.type === 'Usable' || item.type === 'DelayConsume' || item.type === 'Cash' || item.name.toLowerCase().includes('herb') || item.name.toLowerCase().includes('potion');
       if (!isConsumable) return false;
@@ -59,15 +122,7 @@ export default function HomePage() {
       const isEquip = item.type === 'Weapon' || item.type === 'Armor' || item.type === 'Equipment' || item.type === 'Headgear' || item.type === 'Shadow';
       if (!isEquip) return false;
     }
-
-    // 2. Search query check
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
-    const idMatch = String(item.id).includes(q);
-    const nameMatch = item.name?.toLowerCase().includes(q);
-    const aegisMatch = item.aegisName?.toLowerCase().includes(q);
-    const dropMatch = Array.isArray(item.droppedBy) && item.droppedBy.some(d => d.monster?.toLowerCase().includes(q));
-    return idMatch || nameMatch || aegisMatch || dropMatch;
+    return true;
   });
 
   // Handle Save Price from Modal
@@ -157,9 +212,26 @@ export default function HomePage() {
       {/* Search Input Bar (Matching Screenshot 1) */}
       <SearchBar
         value={searchQuery}
-        onChange={setSearchQuery}
-        onSearch={() => {}}
+        onChange={handleQueryChange}
+        onSearch={handleImmediateSearch}
       />
+
+      {/* Search Status & Info Indicator */}
+      <div style={{ textAlign: 'center', margin: '-10px auto 16px auto', fontSize: '0.85rem' }}>
+        {isSearching ? (
+          <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+            ⏳ Sedang mencari di seluruh database rAthena (30.000+ item)...
+          </span>
+        ) : searchedTerm ? (
+          <span style={{ color: '#94a3b8' }}>
+            Hasil pencarian untuk <strong style={{ color: '#fbbf24' }}>"{searchedTerm}"</strong>: ditemukan {filteredItems.length} item.
+          </span>
+        ) : (
+          <span style={{ color: '#64748b' }}>
+            💡 Tekan <strong>Enter</strong> atau klik <strong>Search Button</strong> untuk mencari seketika (atau tunggu 5 detik setelah mengetik).
+          </span>
+        )}
+      </div>
 
       {/* Category Filter Chips */}
       <div className="category-filters">
@@ -168,7 +240,14 @@ export default function HomePage() {
           className={`chip-btn ${selectedCategory === 'all' ? 'active' : ''}`}
           onClick={() => setSelectedCategory('all')}
         >
-          Semua Item ({items.length.toLocaleString('id-ID')})
+          Semua ({filteredItems.length})
+        </button>
+        <button
+          type="button"
+          className={`chip-btn ${selectedCategory === 'equip' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('equip')}
+        >
+          ⚔️ Senjata & Armor
         </button>
         <button
           type="button"
@@ -183,13 +262,6 @@ export default function HomePage() {
           onClick={() => setSelectedCategory('loot')}
         >
           📦 Sampahan & Loot
-        </button>
-        <button
-          type="button"
-          className={`chip-btn ${selectedCategory === 'equip' ? 'active' : ''}`}
-          onClick={() => setSelectedCategory('equip')}
-        >
-          ⚔️ Senjata & Armor
         </button>
         <button
           type="button"
@@ -226,14 +298,14 @@ export default function HomePage() {
           {filteredItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
               <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
-                Item <strong>"{searchQuery}"</strong> tidak ditemukan.
+                Item tidak ditemukan.
               </p>
               <p style={{ fontSize: '0.85rem' }}>
-                Coba cari dengan kata kunci lain seperti <em>Red Herb</em>, <em>White Potion</em>, <em>Jellopy</em>, <em>Elunium</em>, <em>Ice Pick</em>, atau nomor ID.
+                Coba cari dengan nama item seperti <em>Blacksmith Blessing</em>, <em>Ice Pick</em>, <em>Red Herb</em>, <em>Valkyrie</em>, atau nomor ID.
               </p>
             </div>
           ) : (
-            filteredItems.slice(0, 60).map((item) => {
+            filteredItems.map((item) => {
               const saved = savedPrices.find(p => Number(p.itemId) === Number(item.id));
               return (
                 <RateMyServerItemCard
@@ -244,11 +316,6 @@ export default function HomePage() {
                 />
               );
             })
-          )}
-          {filteredItems.length > 60 && (
-            <div style={{ textAlign: 'center', padding: '16px', color: '#8899a6', fontSize: '0.85rem' }}>
-              Menampilkan 60 dari {filteredItems.length.toLocaleString('id-ID')} barang yang cocok. Gunakan kata kunci pencarian yang lebih spesifik jika mencari item tertentu.
-            </div>
           )}
         </div>
       )}
