@@ -88,8 +88,8 @@ export async function POST(request) {
 // DELETE /api/prices
 export async function DELETE(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const itemId = searchParams.get('itemId');
+    const url = request.nextUrl || new URL(request.url, 'http://localhost:3000');
+    const itemId = url.searchParams.get('itemId');
 
     if (!itemId) {
       return NextResponse.json({ success: false, message: 'itemId param required' }, { status: 400 });
